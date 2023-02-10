@@ -102,7 +102,7 @@ const ComponentBox: React.FC<ComponentBoxProps> = ({
       <Dialog.Portal>
         <Dialog.Overlay className="DialogOverlay" />
         <Dialog.Content className="DialogContent">
-          <Dialog.Title className="DialogTitle">Add Image</Dialog.Title>
+          <Dialog.Title className="DialogTitle">Add {component === "image" ? "Image" : "Text"}</Dialog.Title>
           <Dialog.Description className="DialogDescription">
             Add a new {component === "image" ? "image" : "text"} component to
             your project.
@@ -120,7 +120,14 @@ const ComponentBox: React.FC<ComponentBoxProps> = ({
               />
             </fieldset>
           ) : (
-            <input type="text" value={newText} onChange={handleTextChange} />
+            <fieldset className="Fieldset">
+              <input
+                className="Input"
+                type="text"
+                value={newText}
+                onChange={handleTextChange}
+              />
+            </fieldset>
           )}
           <div
             style={{
