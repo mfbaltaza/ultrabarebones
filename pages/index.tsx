@@ -20,19 +20,41 @@ const Card: React.FC<React.PropsWithChildren> = ({ children }) => {
   );
 };
 
-const Text: React.FC<{ text: string }> = ({ text }) => {
+const Text: React.FC<{
+  text: string;
+  id: string;
+  props: ComponentBoxProps;
+}> = ({ text, id, props }) => {
   return (
     <Card>
+      <ComponentBox
+        getComponents={props.getComponents}
+        data={props.data}
+        component={props.component}
+        edit={true}
+        componentId={id}
+      />
       <h1>Text</h1>
       <p>{text}</p>
     </Card>
   );
 };
 
-const Image: React.FC<{ src: string }> = ({ src }) => {
+const Image: React.FC<{
+  src: string;
+  id: string;
+  props: ComponentBoxProps;
+}> = ({ src, id, props }) => {
   return (
     <Card>
       <h1>Image</h1>
+      <ComponentBox
+        getComponents={props.getComponents}
+        data={props.data}
+        component={props.component}
+        edit={true}
+        componentId={id}
+      />
       <img
         src={src}
         alt="Image"
@@ -51,12 +73,16 @@ interface ComponentBoxProps {
   getComponents: () => void;
   data: Component[];
   component: string;
+  edit?: boolean;
+  componentId?: string;
 }
 
 const ComponentBox: React.FC<ComponentBoxProps> = ({
   getComponents,
   data,
   component,
+  edit,
+  componentId,
 }: ComponentBoxProps) => {
   const [imageURL, setImageURL] = useState("");
   const [newText, setNewText] = useState<string>("");
@@ -69,9 +95,9 @@ const ComponentBox: React.FC<ComponentBoxProps> = ({
     setNewText(e.target.value);
   };
 
-  const addComponent = () => {
+  const addComponent = async () => {
     if (component === "image") {
-      fetch("/api/component", {
+      await fetch("/api/component", {
         method: "POST",
         body: JSON.stringify({
           id: data?.length ? data?.length + 1 : 1,
@@ -81,7 +107,7 @@ const ComponentBox: React.FC<ComponentBoxProps> = ({
       });
       setImageURL("");
     } else if (component === "text") {
-      fetch("/api/component", {
+      await fetch("/api/component", {
         method: "POST",
         body: JSON.stringify({
           id: data?.length ? data?.length + 1 : 1,
@@ -94,18 +120,50 @@ const ComponentBox: React.FC<ComponentBoxProps> = ({
     getComponents();
   };
 
+  const editComponent = async () => {
+    if (!componentId) console.error("You need component id");
+    if (component === "image") {
+      await fetch("/api/component", {
+        method: "PUT",
+        body: JSON.stringify({
+          id: componentId,
+          type: "image",
+          src: imageURL,
+        }),
+      });
+      setImageURL("");
+    }
+    if (component === "text") {
+      await fetch("/api/component", {
+        method: "PUT",
+        body: JSON.stringify({
+          id: componentId,
+          type: "text",
+          text: newText,
+        }),
+      });
+      setNewText("");
+    }
+    getComponents();
+  };
+
   return (
     <Dialog.Root>
       <Dialog.Trigger asChild>
-        <p>Add {component === "image" ? "image" : "text"}</p>
+        <p>
+          {edit ? "Edit" : "Add"} {component === "image" ? "image" : "text"}
+        </p>
       </Dialog.Trigger>
       <Dialog.Portal>
         <Dialog.Overlay className="DialogOverlay" />
         <Dialog.Content className="DialogContent">
-          <Dialog.Title className="DialogTitle">Add {component === "image" ? "Image" : "Text"}</Dialog.Title>
+          <Dialog.Title className="DialogTitle">
+            {edit ? "Edit" : "Add"} {component === "image" ? "Image" : "Text"}
+          </Dialog.Title>
           <Dialog.Description className="DialogDescription">
-            Add a new {component === "image" ? "image" : "text"} component to
-            your project.
+            {edit ? "Edit" : "Add"} a new{" "}
+            {component === "image" ? "image" : "text"} component to your
+            project.
           </Dialog.Description>
           {component === "image" ? (
             <fieldset className="Fieldset">
@@ -137,7 +195,10 @@ const ComponentBox: React.FC<ComponentBoxProps> = ({
             }}
           >
             <Dialog.Close asChild>
-              <button className="Button green" onClick={addComponent}>
+              <button
+                className="Button green"
+                onClick={edit ? editComponent : addComponent}
+              >
                 Save changes
               </button>
             </Dialog.Close>
@@ -207,10 +268,24 @@ const Home: NextPage = () => {
       >
         {data.map((component) => {
           if (component.type === "text") {
-            return <Text key={component.id} text={component.text} />;
+            return (
+              <Text
+                props={{ getComponents, data, component: "text" }}
+                key={component.id}
+                text={component.text}
+                id={component.id}
+              />
+            );
           }
           if (component.type === "image") {
-            return <Image key={component.id} src={component.src} />;
+            return (
+              <Image
+                props={{ getComponents, data, component: "image" }}
+                key={component.id}
+                src={component.src}
+                id={component.id}
+              />
+            );
           }
 
           return null;
