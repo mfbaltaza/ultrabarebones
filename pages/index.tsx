@@ -32,6 +32,7 @@ const Text: React.FC<{
         data={props.data}
         component={props.component}
         edit={true}
+        del={true}
         componentId={id}
       />
       <h1>Text</h1>
@@ -53,6 +54,7 @@ const Image: React.FC<{
         data={props.data}
         component={props.component}
         edit={true}
+        del={true}
         componentId={id}
       />
       <img
@@ -75,6 +77,7 @@ interface ComponentBoxProps {
   component: string;
   edit?: boolean;
   componentId?: string;
+  del?: boolean;
 }
 
 const ComponentBox: React.FC<ComponentBoxProps> = ({
@@ -83,6 +86,7 @@ const ComponentBox: React.FC<ComponentBoxProps> = ({
   component,
   edit,
   componentId,
+  del,
 }: ComponentBoxProps) => {
   const [imageURL, setImageURL] = useState("");
   const [newText, setNewText] = useState<string>("");
@@ -147,6 +151,33 @@ const ComponentBox: React.FC<ComponentBoxProps> = ({
     getComponents();
   };
 
+  const removeComponent = async () => {
+    if (!componentId) console.error("You need component id");
+    if (component === "image") {
+      await fetch("/api/component", {
+        method: "DELETE",
+        body: JSON.stringify({
+          id: componentId,
+          type: "image",
+          src: imageURL,
+        }),
+      });
+      setImageURL("");
+    }
+    if (component === "text") {
+      await fetch("/api/component", {
+        method: "DELETE",
+        body: JSON.stringify({
+          id: componentId,
+          type: "text",
+          text: newText,
+        }),
+      });
+      setNewText("");
+    }
+    getComponents();
+  };
+
   return (
     <Dialog.Root>
       <Dialog.Trigger asChild>
@@ -154,6 +185,7 @@ const ComponentBox: React.FC<ComponentBoxProps> = ({
           {edit ? "Edit" : "Add"} {component === "image" ? "image" : "text"}
         </p>
       </Dialog.Trigger>
+      {del ? <p style={{marginTop: 0}} onClick={removeComponent}>Delete</p> : null}
       <Dialog.Portal>
         <Dialog.Overlay className="DialogOverlay" />
         <Dialog.Content className="DialogContent">

@@ -18,10 +18,14 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 
   if (req.method === "POST") {
     content.push(component);
-    writeFile(`${process.cwd()}/database.json`, JSON.stringify(content), (err) => {
-      if (err) throw err;
-      res.status(200).json(component);
-    });
+    writeFile(
+      `${process.cwd()}/database.json`,
+      JSON.stringify(content),
+      (err) => {
+        if (err) throw err;
+        res.status(200).json(component);
+      }
+    );
   }
   if (req.method === "PUT") {
     const foundComponent = content.find(
@@ -32,10 +36,32 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     component.src
       ? (foundComponent.src = component.src)
       : (foundComponent.text = component.text);
-    writeFile(`${process.cwd()}/database.json`, JSON.stringify(content), (err) => {
-      if (err) console.error(err);
-    });
+    writeFile(
+      `${process.cwd()}/database.json`,
+      JSON.stringify(content),
+      (err) => {
+        if (err) console.error(err);
+      }
+    );
     res.status(200).json(component);
+  }
+  if (req.method === "DELETE") {
+    const foundComponentIndex = content.findIndex(
+      (c: Component) => c.id === component.id
+    );
+
+    if (foundComponentIndex === -1) return;
+
+    // Remove the component from the array using splice
+    content.splice(foundComponentIndex, 1);
+    writeFile(
+      `${process.cwd()}/database.json`,
+      JSON.stringify(content),
+      (err) => {
+        if (err) console.error(err);
+      }
+    );
+    res.status(200).json({ message: "Component deleted successfully" }); // Informative response
   }
   res.status(404).json({ message: "Not found" });
 }
